@@ -6,4 +6,5 @@ VERSION
 Makefile.PL
 lib/ogd.pm
 t/ogd01.t
+t/ogd02.t
 META.yml                                 Module meta-data (added by MakeMaker)
