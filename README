@@ -1,0 +1,15 @@
+README for ogd
+
+This module adds ordered destruction of object in LIFO order during global
+destruction.
+
+Required Modules:
+ B (any)
+ Scalar::Util (any)
+
+The build is standard:
+
+perl Makefile.PL
+make
+make test
+make install
