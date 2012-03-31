@@ -4,7 +4,7 @@ require 5.008001; # must have a good B in the core
 # Make sure we have version info for this module
 # Make sure we do everything by the book from now on
 
-$VERSION = '0.02';
+$VERSION = '0.03';
 use strict;
 
 # At compile time
@@ -161,17 +161,21 @@ __END__
 
 =head1 NAME
 
-ogd - ordered global destruction of objects stored in globals
+ogd - ordered global destruction
 
 =head1 SYNOPSIS
 
- perl -m=ogd yourscript.pl # recommended
+ perl -mogd yourscript.pl # recommended
 
- export PERL5OPT=-m=ogd
+ export PERL5OPT=-mogd
  perl yourscript.pl
 
  use ogd;
  ogd->register( @object ); # for objects from XSUBs only
+
+=head1 VERSION
+
+This documentation describes version 0.03.
 
 =head1 DESCRIPTION
 
@@ -181,6 +185,20 @@ in LIFO order during global destruction.
 Ordered global destruction is only applicable to objects stored in non-lexical
 variables (even if they are in file scope).  Apparently Perl destroys all
 objects stored file-level lexicals B<before> the first END block is called.
+
+=head1 THE PROBLEM
+
+If you store objects in global variables, and those objects contain
+references to other objects stored in global variabkes, then you cannot be
+sure of the order in which these objects are destroyed when executing of
+Perl is stopped (by reaching the end of the script, or by an C<exit()>).
+
+To get the proper behaviour, it is better to use file lexical variables.
+But sometimes this is not possible, e.g. when you're using L<AutoLoader>.
+
+The random way these objects are destroyed, can sometimes be a problem.
+This pragma is intended to replace this random behaviour by a deterministic
+behaviour.
 
 =head1 THEORY OF OPERATION
 
@@ -310,7 +328,7 @@ allowed (allowing for more or lesser aggressive cleanup checks).
 
 =head1 TODO
 
-Maybe an C<after()> and C<before> class method should be added to manipulate
+Maybe an C<after> and C<before> class method should be added to manipulate
 the order in which objects will be destroyed at global destruction?
 
 Examples should be added.
@@ -329,7 +347,7 @@ L<Thread::Bless>.
 
 =head1 COPYRIGHT
 
-Copyright (c) 2004 Elizabeth Mattijsen <liz@dijkmat.nl>. All rights
+Copyright (c) 2004, 2012 Elizabeth Mattijsen <liz@dijkmat.nl>. All rights
 reserved.  This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 

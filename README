@@ -3,6 +3,9 @@ README for ogd
 This module adds ordered destruction of object in LIFO order during global
 destruction.
 
+Version:
+ 0.03
+
 Required Modules:
  B (any)
  Scalar::Util (any)

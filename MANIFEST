@@ -8,3 +8,4 @@ lib/ogd.pm
 t/ogd01.t
 t/ogd02.t
 META.yml                                 Module meta-data (added by MakeMaker)
+META.json                                Module JSON meta-data (added by MakeMaker)
