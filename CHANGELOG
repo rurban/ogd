@@ -1,3 +1,6 @@
+0.04	2014-07-02 rurban
+	Fixed RT#92270, destruction of objects without DESTROY method
+
 0.03	31 March 2012
 	Added some pod.  Made sure it runs with 5.14.2, threaded and unthreaded.
 

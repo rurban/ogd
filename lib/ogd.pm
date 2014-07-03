@@ -4,7 +4,7 @@ require 5.008001; # must have a good B in the core
 # Make sure we have version info for this module
 # Make sure we do everything by the book from now on
 
-$VERSION = '0.03';
+$VERSION = '0.04';
 use strict;
 
 # At compile time
@@ -63,7 +63,7 @@ BEGIN {
 END {
     require B;
     push @{B::end_av()->object_2svref},\&_shutting_down;
-print STDERR "*\n" if DEBUG;
+    print STDERR "*\n" if DEBUG;
 } #END
 
 # Satisfy -require-
@@ -88,7 +88,7 @@ sub register {
 # Store weakened references to the object in the global list
 
     shift;
-print STDERR "+".(@_)."\n" if DEBUG;
+    print STDERR "+".(@_)."\n" if DEBUG;
     weaken( $object[@object] = $_ ) foreach @_;
 
 # Remember current number of objects registered (ever)
@@ -105,7 +105,7 @@ print STDERR "+".(@_)."\n" if DEBUG;
         foreach (reverse 0..$#object) {
             splice @object,$_,1 unless defined $object[$_];
         }
-print STDERR "-$before->".(@object)."\n" if DEBUG and $before > @object;
+        print STDERR "-$before->".(@object)."\n" if DEBUG and $before > @object;
     }
 } #register
 
@@ -132,16 +132,16 @@ sub _shutting_down {
     foreach (reverse 0..$#object) {
         next unless defined $object[$_];
         $package{blessed $object[$_]}++;
-        $object[$_]->DESTROY( 1 );
-$done++ if DEBUG;
+        $object[$_]->DESTROY( 1 ) if $object[$_]->can('DESTROY');
+        $done++ if DEBUG;
     }
-print STDERR "!$done\n" if DEBUG;
+    print STDERR "!$done\n" if DEBUG;
 
 # Make sure we'll be silent about the dirty stuff
 # Replace DESTROY subs of all packages found with an empty stub
 
     no strict 'refs'; no warnings 'redefine';
-print STDERR qq{x@{[map { "$_($package{$_})" } sort keys %package]}\n} if DEBUG;
+    print STDERR qq{x@{[map { "$_($package{$_})" } sort keys %package]}\n} if DEBUG;
     *{$_.'::DESTROY'} = \&_destroy foreach keys %package;
 } #_shutting_down
 
@@ -337,7 +337,7 @@ Examples should be added.
 
 Elizabeth Mattijsen, <liz@dijkmat.nl>.
 
-Please report bugs to <perlbugs@dijkmat.nl>.
+Please report bugs to the RT ticket queue.
 
 =head1 ACKNOWLEDGEMENTS
 
