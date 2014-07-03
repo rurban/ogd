@@ -12,3 +12,9 @@ WriteMakefile (
                     Scalar::Util  0
                    ) },
 );
+
+package MY;
+sub depend { "
+README.md : \$(VERSION_FROM)
+	pod2markdown \$(VERSION_FROM) > \$@"
+}
