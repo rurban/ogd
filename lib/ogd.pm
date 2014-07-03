@@ -22,7 +22,13 @@ BEGIN {
 
 # Make sure we can find out the blessing of an object and to weaken it
 
-use Scalar::Util qw(blessed weaken);
+require Scalar::Util;
+unless (defined &Scalar::Util::weaken) { # PP version only
+  eval 'sub weaken { @_ }'; # do nothing
+  Scalar::Util->import(qw(blessed));
+} else {
+  Scalar::Util->import(qw(blessed weaken));
+}
 
 # Initialize counter for number of objects registered
 # List with objects that should be destroyed (first is a dummy object)
@@ -131,7 +137,8 @@ sub _shutting_down {
     my $done = 0;
     foreach (reverse 0..$#object) {
         next unless defined $object[$_];
-        $package{blessed $object[$_]}++;
+        #print STDERR "- $_: $object[$_]\n" if DEBUG;
+        $package{blessed($object[$_])}++;
         $object[$_]->DESTROY( 1 ) if $object[$_]->can('DESTROY');
         $done++ if DEBUG;
     }
@@ -175,25 +182,40 @@ ogd - ordered global destruction
 
 =head1 VERSION
 
-This documentation describes version 0.03.
+This documentation describes version 0.04.
 
 =head1 DESCRIPTION
 
 This module adds ordered destruction of objects stored in global variables
 in LIFO order during global destruction.
 
-Ordered global destruction is only applicable to objects stored in non-lexical
-variables (even if they are in file scope).  Apparently Perl destroys all
-objects stored file-level lexicals B<before> the first END block is called.
+Ordered global destruction is only applicable to objects with DESTROY
+methods stored in non-lexical (i.e. global or our) variables (even if
+they are in file scope). Lexical our variables behave like global
+objects in this regard.
+
+Note that global destruction should be avoided at all. Rather use my
+variables for all objects and file handles to get proper timely
+destruction and avoid weird sideeffects or even crashes with already
+destroyed objects being referenced in DESTROY blocks.
+
+Perl destroys all lexical my and state objects B<before> the first END
+block is called, at the end of the scope of each block where they are
+defined. Then the END block is executed, and then the remaining package
+objects and global IO objects are destructed, i.e. their DESTROY methods
+are called.
+
+With a DEBUGGING perl you can use the C<-DD> command-line flag to see
+the order of global destruction.
 
 =head1 THE PROBLEM
 
 If you store objects in global variables, and those objects contain
-references to other objects stored in global variabkes, then you cannot be
+references to other objects stored in global variables, then you cannot be
 sure of the order in which these objects are destroyed when executing of
 Perl is stopped (by reaching the end of the script, or by an C<exit()>).
 
-To get the proper behaviour, it is better to use file lexical variables.
+To get the proper behaviour it is better to use lexical my variables.
 But sometimes this is not possible, e.g. when you're using L<AutoLoader>.
 
 The random way these objects are destroyed, can sometimes be a problem.
@@ -233,7 +255,7 @@ stubs, this is effectively a noop.
 
 =head2 register
 
- ogd->register( @object ); # only for blessed objects created in XSUBs
+   ogd->register( @object ); # only for blessed objects created in XSUBs
 
 Not all blessed objects in Perl are necessarily created with "bless": they can
 also be created in XSUBs and thereby bypass the registration mechanism that
@@ -243,8 +265,8 @@ passed to it will be registered.
 
 =head1 REQUIRED MODULES
 
- B (any)
- Scalar::Util (any)
+   B (any)
+   Scalar::Util (with the XS version of List::Util)
 
 =head1 ORDER OF LOADING
 
@@ -285,7 +307,7 @@ destroyed objects have been removed, a line starting with "-", followed by
 the original number of elements in the list, followed by "->", the number
 of objects left after cleanup, and a newline.  You would e.g. see this as:
 
- -1024->564
+   -1024->564
 
 on STDERR.
 
@@ -294,7 +316,7 @@ on STDERR.
 As soon as the END block of C<ogd> itself is executed, a "*" followed by a
 newline is sent to STDERR:
 
- *
+   *
 
 =item objects destroyed
 
@@ -302,7 +324,7 @@ As soon as all of the valid objects registered have been called with the
 DESTROY method, a "!" followed by the number of objects handled, will be sent
 to STDERR.  E.g.:
 
- !234
+   !234
 
 =item packages patched
 
@@ -311,7 +333,7 @@ empty stub, followed by the number of objects forcibly destroyed of that
 class between parentheses, will be sent to STDERR prefixed with "x".  For
 instance:
 
- *Foo(123) Bar(234) Baz(13)
+   *Foo(123) Bar(234) Baz(13)
 
 =back
 
@@ -333,9 +355,14 @@ the order in which objects will be destroyed at global destruction?
 
 Examples should be added.
 
+Check in which perl version deterministic order of global destruction
+was added and B<ogd> is not needed anymore.
+
 =head1 AUTHOR
 
 Elizabeth Mattijsen, <liz@dijkmat.nl>.
+
+Current maintainer: Reini Urban <rurban@cpan.org>
 
 Please report bugs to the RT ticket queue.
 
@@ -347,12 +374,14 @@ L<Thread::Bless>.
 
 =head1 COPYRIGHT
 
-Copyright (c) 2004, 2012 Elizabeth Mattijsen <liz@dijkmat.nl>. All rights
-reserved.  This program is free software; you can redistribute it and/or
-modify it under the same terms as Perl itself.
+Copyright (c) 2004, 2012 Elizabeth Mattijsen <liz@dijkmat.nl>.
+Copyright (c) 2014 Reini Urban <rurban@cpanel.net>.  All rights
+reserved.  This program is free software; you can redistribute it
+and/or modify it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-L<Thread::Bless>.
+L<Thread::Bless>, L<perlhacktips/PERL_DESTRUCT_LEVEL>
+
 
 =cut

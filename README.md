@@ -14,25 +14,40 @@ ogd - ordered global destruction
 
 # VERSION
 
-This documentation describes version 0.03.
+This documentation describes version 0.04.
 
 # DESCRIPTION
 
 This module adds ordered destruction of objects stored in global variables
 in LIFO order during global destruction.
 
-Ordered global destruction is only applicable to objects stored in non-lexical
-variables (even if they are in file scope).  Apparently Perl destroys all
-objects stored file-level lexicals __before__ the first END block is called.
+Ordered global destruction is only applicable to objects with DESTROY
+methods stored in non-lexical (i.e. global or our) variables (even if
+they are in file scope). Lexical our variables behave like global
+objects in this regard.
+
+Note that global destruction should be avoided at all. Rather use my
+variables for all objects and file handles to get proper timely
+destruction and avoid weird sideeffects or even crashes with already
+destroyed objects being referenced in DESTROY blocks.
+
+Perl destroys all lexical my and state objects __before__ the first END
+block is called, at the end of the scope of each block where they are
+defined. Then the END block is executed, and then the remaining package
+objects and global IO objects are destructed, i.e. their DESTROY methods
+are called.
+
+With a DEBUGGING perl you can use the `-DD` command-line flag to see
+the order of global destruction.
 
 # THE PROBLEM
 
 If you store objects in global variables, and those objects contain
-references to other objects stored in global variabkes, then you cannot be
+references to other objects stored in global variables, then you cannot be
 sure of the order in which these objects are destroyed when executing of
 Perl is stopped (by reaching the end of the script, or by an `exit()`).
 
-To get the proper behaviour, it is better to use file lexical variables.
+To get the proper behaviour it is better to use lexical my variables.
 But sometimes this is not possible, e.g. when you're using [AutoLoader](https://metacpan.org/pod/AutoLoader).
 
 The random way these objects are destroyed, can sometimes be a problem.
@@ -83,7 +98,7 @@ passed to it will be registered.
 # REQUIRED MODULES
 
     B (any)
-    Scalar::Util (any)
+    Scalar::Util (with the XS version of List::Util)
 
 # ORDER OF LOADING
 
@@ -168,9 +183,14 @@ the order in which objects will be destroyed at global destruction?
 
 Examples should be added.
 
+Check in which perl version deterministic order of global destruction
+was added and __ogd__ is not needed anymore.
+
 # AUTHOR
 
 Elizabeth Mattijsen, <liz@dijkmat.nl>.
+
+Current maintainer: Reini Urban <rurban@cpan.org>
 
 Please report bugs to the RT ticket queue.
 
@@ -182,10 +202,13 @@ the suggestion of using the B module.  Inspired by similar work on
 
 # COPYRIGHT
 
-Copyright (c) 2004, 2012 Elizabeth Mattijsen <liz@dijkmat.nl>. All rights
-reserved.  This program is free software; you can redistribute it and/or
-modify it under the same terms as Perl itself.
+Copyright (c) 2004, 2012 Elizabeth Mattijsen <liz@dijkmat.nl>.
+Copyright (c) 2014 Reini Urban <rurban@cpanel.net>.  All rights
+reserved.  This program is free software; you can redistribute it
+and/or modify it under the same terms as Perl itself.
 
 # SEE ALSO
 
-[Thread::Bless](https://metacpan.org/pod/Thread::Bless).
+[Thread::Bless](https://metacpan.org/pod/Thread::Bless), ["PERL_DESTRUCT_LEVEL" in perlhacktips](https://metacpan.org/pod/perlhacktips#PERL_DESTRUCT_LEVEL)
+
+

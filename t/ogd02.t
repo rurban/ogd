@@ -228,7 +228,7 @@ EOD
     ok( close( $handle ),"Close script: $! " );
 
     local $/;
-    ok( open( $handle,"$^X -I$INC[-1] -mogd script 2>&1 |" ),"Open pipe: $! " );
+    ok( open( $handle,"$^X -Mblib -I$INC[-1] -mogd script 2>&1 |" ),"Open pipe: $! " );
     my $found = <$handle>;
     $code->( $found ) if $code;
     is( $found,$output,"Check pipe output" );
